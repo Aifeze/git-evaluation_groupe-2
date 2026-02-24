@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+
+
+def nettoyer_expression(ligne: str) -> str:
+    # enlève tous les espaces
+    return "".join(ligne.split())
+
+
+def verifier_et_preparer_expression(ligne: str):
+    texte = nettoyer_expression(ligne)
+
+    if texte == "":
+        raise SyntaxError("Expression vide")
+
+    operateurs = "+-*/"
+    position_operateur = -1
+    operateur_trouve = None
+
+    # on cherche un seul opérateur
+    for i, caractere in enumerate(texte):
+        if caractere in operateurs:
+            if position_operateur != -1:
+                raise SyntaxError("Trop d'opérateurs")
+            position_operateur = i
+            operateur_trouve = caractere
+
+    if position_operateur == -1:
+        raise SyntaxError("Opérateur manquant")
+
+    gauche = texte[:position_operateur]
+    droite = texte[position_operateur + 1:]
+
+    # il faut 2 nombres
+    if gauche == "" or droite == "":
+        raise SyntaxError("Nombre manquant")
+
+    # seulement des chiffres (nombres positifs)
+    if not gauche.isdigit() or not droite.isdigit():
+        raise SyntaxError("Format invalide")
+
+    # ex: "0004/2" -> "4/2"
+    return f"{int(gauche)}{operateur_trouve}{int(droite)}"
+
+
+def calculer_avec_eval(expression: str):
+    # on calcule l'expression
+    return eval(expression, {"__builtins__": {}}, {})
+
+
+def formater_resultat(resultat):
+    # +, -, * donnent souvent un int
+    if isinstance(resultat, int):
+        return str(resultat)
+
+    # pour les divisions : arrondi à 2 décimales max
+    resultat_arrondi = round(resultat, 2)
+    texte = f"{resultat_arrondi:.2f}"
+
+    # 4.00 -> 4.0 (comme dans l'exemple)
+    if texte.endswith("00"):
+        return texte[:-1]
+
+    # 2.50 -> 2.5
+    if texte.endswith("0"):
+        return texte[:-1]
+
+    return texte
+
+
+def traiter_une_ligne(ligne_brute: str):
+    # on ignore les lignes vides
+    if ligne_brute.strip() == "":
+        return None, False
+
+    try:
+        expression = verifier_et_preparer_expression(ligne_brute)
+        resultat = calculer_avec_eval(expression)
+        return formater_resultat(resultat), False
+
+    except ZeroDivisionError:
+        return "Division par zéro", True
+
+    except (SyntaxError, NameError, TypeError):
+        return f'Erreur de syntaxe pour le calcul: "{ligne_brute}"', True
+
+
+def mode_interactif():
+    il_y_a_erreur = False
+
+    while True:
+        try:
+            ligne = input("> ")
+        except EOFError:
+            # Ctrl + D
+            print("Fin des calculs :)")
+            return 1 if il_y_a_erreur else 0
+
+        message, est_erreur = traiter_une_ligne(ligne)
+
+        if message is not None:
+            print(message)
+
+        if est_erreur:
+            il_y_a_erreur = True
+
+
+def mode_stdin():
+    il_y_a_erreur = False
+
+    for ligne in sys.stdin:
+        ligne = ligne.rstrip("\n")
+        message, est_erreur = traiter_une_ligne(ligne)
+
+        if message is not None:
+            print(message)
+
+        if est_erreur:
+            il_y_a_erreur = True
+
+    return 1 if il_y_a_erreur else 0
+
+
+def principal():
+    # si on lance dans le terminal -> mode interactif
+    # sinon (pipe/fichier) -> lecture sur stdin
+    if sys.stdin.isatty():
+        return mode_interactif()
+    return mode_stdin()
+
+
+if __name__ == "__main__":
+    sys.exit(principal())
