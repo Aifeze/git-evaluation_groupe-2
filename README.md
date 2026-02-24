@@ -151,4 +151,8 @@ ou
     1. $ python generator -5
     2. Error: argument must be a positive integer
     3. $
+------------------------------------------------------------------------
 
+# Publication
+
+Lien vidéo YouTube : https://youtu.be/FeEE8FHKFLk
