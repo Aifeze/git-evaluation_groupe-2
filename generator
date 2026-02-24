@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+import random
+import sys
+
+
+def tirer_nombre():
+    # nombres dans [1, 1000] comme dans la consigne
+    return random.randint(1, 1000)
+
+
+def tirer_operateur():
+    # une des 4 opérations
+    return random.choice(["+", "-", "*", "/"])
+
+
+def generer_expression():
+    # crée une expression du type "12+34"
+    gauche = tirer_nombre()
+    operateur = tirer_operateur()
+    droite = tirer_nombre()  # jamais 0 donc ok pour les divisions
+
+    return f"{gauche}{operateur}{droite}"
+
+
+def lire_nombre_expressions(arguments):
+    # on attend exactement 1 argument : le nombre d'expressions à générer
+    if len(arguments) != 2:
+        raise ValueError("Usage: ./generator <nombre>")
+
+    try:
+        nombre = int(arguments[1])
+    except ValueError:
+        raise ValueError("Le nombre d'expressions doit être un entier")
+
+    if nombre <= 0:
+        raise ValueError("Le nombre d'expressions doit être positif")
+
+    return nombre
+
+
+def afficher_expressions(nombre):
+    # affiche une expression par ligne
+    for _ in range(nombre):
+        print(generer_expression())
+
+
+def principal():
+    try:
+        nombre = lire_nombre_expressions(sys.argv)
+        afficher_expressions(nombre)
+        return 0
+
+    except ValueError as erreur:
+        # message d'erreur sur stderr
+        print(erreur, file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(principal())
